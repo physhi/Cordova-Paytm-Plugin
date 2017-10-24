@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <plugin xmlns="http://apache.org/cordova/ns/plugins/1.0"
-    id="paytm-cordova-plugin"
+    id="cordova-paytm-plugin"
     version="1.0.0">
     <name>Paytm Cordova Plugin</name>
     <description>Paytm Plugin allowa you to integrate paytm paymentgateway in Cordova or ionic appliaction </description>

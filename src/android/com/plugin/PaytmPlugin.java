@@ -40,7 +40,20 @@ public class PaytmPlugin extends CordovaPlugin {
     if(action.equals(PAYTM_PAYMENT)) {
 
       //orderid, cust_id, email, phone, txn_amt,callback_url,checksum_hash,environment
-      startPayment(args.getString(0), args.getString(1), args.getString(2), args.getString(3), args.getString(4), args.getString(5),args.getString(6),args.getString(7), callbackContext);
+      startPayment(
+              args.getString(0),
+              args.getString(1),
+              args.getString(2),
+              args.getString(3),
+              args.getString(4),
+              args.getString(5),
+              args.getString(6),
+              args.getString(7),
+              args.getString(8),
+              args.getString(9),
+              args.getString(10),
+              args.getString(11),
+              callbackContext);
       return true;
 
     }
