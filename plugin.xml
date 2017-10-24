@@ -9,13 +9,6 @@
     <repo>https://github.com/narendra-ct/Cordova-Paytm-Plugin.git</repo>
     <issue>https://github.com/narendra-ct/Cordova-Paytm-Plugin/issues</issue>
 
-    <!-- <preference name="GENERATE_URL" />
-    <preference name="VERIFY_URL" /> -->
-    <preference name="MERCHANT_ID" />
-    <preference name="INDUSTRY_TYPE_ID" />
-    <preference name="CHANNEL_ID" />
-    <preference name="WEBSITE" />
-
     <!-- android -->
     <platform name="android">
       <js-module src="www/plugin.js" name="plugin">
@@ -31,15 +24,6 @@
       </config-file>
 
     <source-file src="src/android/res/values/paytmInfo.xml" target-dir="res/values" />
-    <config-file target="res/values/paytmInfo.xml" parent="/*">
-        <!-- <string name="paytm_gen_url">$GENERATE_URL</string>
-        <string name="paytm_chk_url">$VERIFY_URL</string> -->
-        <string name="paytm_merchant_id">$MERCHANT_ID</string>
-        <string name="paytm_industry_type_id">$INDUSTRY_TYPE_ID</string>
-        <string name="paytm_channel_id">$CHANNEL_ID</string>
-        <string name="paytm_website">$WEBSITE</string>
-    </config-file>
-
      <config-file target="AndroidManifest.xml" parent="/*">
         <uses-permission android:name="android.permission.INTERNET"/>
         <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
@@ -52,8 +36,6 @@
      <source-file src="src/android/PaytmSDK/PGSDK_V2.1.jar" target-dir="libs" />
       <source-file src="src/android/com/plugin/PaytmPlugin.java" target-dir="src/com/plugin/" />
     </platform>
-
-
 
     <!-- ios -->
     <platform name="ios">
@@ -68,27 +50,6 @@
             </feature>
         </config-file>
 
-           
-    <!-- <config-file target="*-Info.plist" parent="PayTMGenerateChecksumURL">
-        <string>$GENERATE_URL</string>
-    </config-file>
-    <config-file target="*-Info.plist" parent="PayTMVerifyChecksumURL">
-        <string>$VERIFY_URL</string>
-    </config-file> -->
-    <config-file target="*-Info.plist" parent="PayTMMerchantID">
-        <string>$MERCHANT_ID</string>
-    </config-file>
-    <config-file target="*-Info.plist" parent="PayTMIndustryTypeID">
-        <string>$INDUSTRY_TYPE_ID</string>
-    </config-file>
-    <config-file target="*-Info.plist" parent="PayTMWebsite">
-        <string>$WEBSITE</string>
-    </config-file>
-        <config-file target="*-Info.plist" parent="PayTMChannelId">
-        <string>$CHANNEL_ID</string>
-    </config-file>
-
-        
         <header-file src="src/ios/Paytm/include/PaymentsSDK.h"/>
         <header-file src="src/ios/Paytm/include/PGMerchantConfiguration.h"/>
         <header-file src="src/ios/Paytm/include/PGOrder.h"/>
@@ -101,10 +62,5 @@
         <!-- Paytm framework -->
         <source-file src="src/ios/Paytm/libPaymentsSDK.a" framework="true"/>
         <framework src="SystemConfiguration.framework" />
-
-
-
-
-
     </platform>
 </plugin>

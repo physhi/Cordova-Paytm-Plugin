@@ -31,39 +31,9 @@ public class PaytmPlugin extends CordovaPlugin {
   private static final String PRODUCTION = "production";
   private static final String PAYTM_PAYMENT = "payWithPaytm";
 
-
-
-
-
-//  private String PAYTM_GENERATE_URL;
-//  private String PAYTM_VALIDATE_URL;
-
-  private String PAYTM_MERCHANT_ID;
-  private String PAYTM_INDUSTRY_TYPE_ID;
-  private String PAYTM_CHANNEL_ID;
-  private String PAYTM_WEBSITE;
-
   public void initialize(CordovaInterface cordova, CordovaWebView webView) {
     super.initialize(cordova, webView);
-
     Log.d(TAG, "Initializing PaytmPlugin");
-
-    int appResId;
-//    int appResId = cordova.getActivity().getResources().getIdentifier("paytm_gen_url", "string", cordova.getActivity().getPackageName());
-//    PAYTM_GENERATE_URL = cordova.getActivity().getString(appResId);
-
-//    appResId = cordova.getActivity().getResources().getIdentifier("paytm_chk_url", "string", cordova.getActivity().getPackageName());
-//    PAYTM_VALIDATE_URL = cordova.getActivity().getString(appResId);
-
-    appResId = cordova.getActivity().getResources().getIdentifier("paytm_merchant_id", "string", cordova.getActivity().getPackageName());
-    PAYTM_MERCHANT_ID = cordova.getActivity().getString(appResId);
-    appResId = cordova.getActivity().getResources().getIdentifier("paytm_industry_type_id", "string", cordova.getActivity().getPackageName());
-    PAYTM_INDUSTRY_TYPE_ID = cordova.getActivity().getString(appResId);
-    appResId = cordova.getActivity().getResources().getIdentifier("paytm_website", "string", cordova.getActivity().getPackageName());
-    PAYTM_WEBSITE = cordova.getActivity().getString(appResId);
-    appResId = cordova.getActivity().getResources().getIdentifier("paytm_channel_id", "string", cordova.getActivity().getPackageName());
-    PAYTM_CHANNEL_ID = cordova.getActivity().getString(appResId);
-
   }
 
   public boolean execute(String action, JSONArray args, final CallbackContext callbackContext) throws JSONException {
@@ -79,15 +49,20 @@ public class PaytmPlugin extends CordovaPlugin {
   }
 
 
-  private void startPayment(final String order_id,
-                            final String cust_id,
-                            final String email,
-                            final String phone,
-                            final String txn_amt,
-                            final String callback_url,
-                            final String checksum_hash,
-                            final String environment,
-                            final CallbackContext callbackContext) {
+  private void startPayment(
+        final String merchant_id,
+        final String industry_type_id,
+        final String channel_id,
+        final String website,
+        final String order_id,
+        final String cust_id,
+        final String email,
+        final String phone,
+        final String txn_amt,
+        final String callback_url,
+        final String checksum_hash,
+        final String environment,
+        final CallbackContext callbackContext) {
 
 
     if(environment.equals(STAGIN)){
@@ -105,13 +80,13 @@ public class PaytmPlugin extends CordovaPlugin {
 
     //Kindly create complete Map and checksum on your server side and then put it here in paramMap.
     Map<java.lang.String, java.lang.String> paramMap = new HashMap<java.lang.String, java.lang.String>();
-    paramMap.put("MID" , PAYTM_MERCHANT_ID);
+    paramMap.put("MID" , merchant_id);
     paramMap.put("ORDER_ID" , order_id);
     paramMap.put("CUST_ID" , cust_id);
-    paramMap.put("INDUSTRY_TYPE_ID" , PAYTM_INDUSTRY_TYPE_ID);
-    paramMap.put("CHANNEL_ID" , PAYTM_CHANNEL_ID);
+    paramMap.put("INDUSTRY_TYPE_ID" , industry_type_id);
+    paramMap.put("CHANNEL_ID" , channel_id);
     paramMap.put("TXN_AMOUNT" , txn_amt);
-    paramMap.put("WEBSITE" , PAYTM_WEBSITE);
+    paramMap.put("WEBSITE" , website);
     paramMap.put("CALLBACK_URL" , callback_url);
     paramMap.put("EMAIL" , email);
     paramMap.put("MOBILE_NO" , phone);
