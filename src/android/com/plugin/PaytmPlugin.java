@@ -1,6 +1,10 @@
-/**
- */
 package com.plugin;
+
+import android.app.AlertDialog;
+import android.app.AlertDialog.Builder;
+import android.content.DialogInterface;
+import android.os.Bundle;
+import android.util.Log;
 
 import org.apache.cordova.CallbackContext;
 import org.apache.cordova.CordovaInterface;
@@ -9,179 +13,209 @@ import org.apache.cordova.CordovaWebView;
 import org.apache.cordova.PluginResult;
 import org.json.JSONArray;
 import org.json.JSONException;
+import org.json.JSONObject;
 
-import android.os.Bundle;
-import android.util.Log;
-import android.widget.Toast;
-
-import com.paytm.pgsdk.PaytmOrder;
-import com.paytm.pgsdk.PaytmPGService;
-import com.paytm.pgsdk.PaytmPaymentTransactionCallback;
-
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
+import java.util.Iterator;
 
+import com.paytm.pgsdk.*;
 
 public class PaytmPlugin extends CordovaPlugin {
-  private static final String TAG = "PaytmPlugin";
 
-  private PaytmPGService Service;
+    private PaytmPGService paytm_service;
 
-  private static final String STAGIN = "staging";
-  private static final String PRODUCTION = "production";
-  private static final String PAYTM_PAYMENT = "payWithPaytm";
-
-  public void initialize(CordovaInterface cordova, CordovaWebView webView) {
-    super.initialize(cordova, webView);
-    Log.d(TAG, "Initializing PaytmPlugin");
-  }
-
-  public boolean execute(String action, JSONArray args, final CallbackContext callbackContext) throws JSONException {
-    if(action.equals(PAYTM_PAYMENT)) {
-
-      //orderid, cust_id, email, phone, txn_amt,callback_url,checksum_hash,environment
-      startPayment(
-              args.getString(0),
-              args.getString(1),
-              args.getString(2),
-              args.getString(3),
-              args.getString(4),
-              args.getString(5),
-              args.getString(6),
-              args.getString(7),
-              args.getString(8),
-              args.getString(9),
-              args.getString(10),
-              args.getString(11),
-              callbackContext);
-      return true;
-
+    protected void pluginInitialize() {
     }
 
-    return true;
-  }
-
-
-  private void startPayment(
-        final String merchant_id,
-        final String industry_type_id,
-        final String channel_id,
-        final String website,
-        final String order_id,
-        final String cust_id,
-        final String email,
-        final String phone,
-        final String txn_amt,
-        final String callback_url,
-        final String checksum_hash,
-        final String environment,
-        final CallbackContext callbackContext) {
-
-
-    if(environment.equals(STAGIN)){
-      Service = PaytmPGService.getStagingService();
-    }else if(environment.equals(PRODUCTION)){
-      Service = PaytmPGService.getProductionService();
-    }else{
-      callbackContext.sendPluginResult(new PluginResult(PluginResult.Status.OK, "Please valid environment (staging or production)"));
-      return;
+    public static Object wrap(Object o) {
+        if (o == null) {
+            return JSONObject.NULL;
+        }
+        if (o instanceof JSONArray || o instanceof JSONObject) {
+            return o;
+        }
+        if (o.equals(JSONObject.NULL)) {
+            return o;
+        }
+        try {
+            if (o instanceof Collection) {
+                return new JSONArray((Collection) o);
+            } else if (o.getClass().isArray()) {
+                return new JSONArray(o);
+            }
+            if (o instanceof Map) {
+                return new JSONObject((Map) o);
+            }
+            if (o instanceof Boolean || o instanceof Byte || o instanceof Character || o instanceof Double
+                    || o instanceof Float || o instanceof Integer || o instanceof Long || o instanceof Short
+                    || o instanceof String) {
+                return o;
+            }
+            if (o.getClass().getPackage().getName().startsWith("java.")) {
+                return o.toString();
+            }
+        } catch (Exception ignored) {
+        }
+        return null;
     }
 
+    public boolean execute(String action, JSONArray args, CallbackContext callbackContext) throws JSONException {
+        if (action.equals("startPayment")) {
+            //orderid, cust_id, email, phone, txn_amt
+            String options = args.getString(0);
 
-
-    PaytmPGService Service = PaytmPGService.getStagingService();
-
-    //Kindly create complete Map and checksum on your server side and then put it here in paramMap.
-    Map<java.lang.String, java.lang.String> paramMap = new HashMap<java.lang.String, java.lang.String>();
-    paramMap.put("MID" , merchant_id);
-    paramMap.put("ORDER_ID" , order_id);
-    paramMap.put("CUST_ID" , cust_id);
-    paramMap.put("INDUSTRY_TYPE_ID" , industry_type_id);
-    paramMap.put("CHANNEL_ID" , channel_id);
-    paramMap.put("TXN_AMOUNT" , txn_amt);
-    paramMap.put("WEBSITE" , website);
-    paramMap.put("CALLBACK_URL" , callback_url);
-    paramMap.put("EMAIL" , email);
-    paramMap.put("MOBILE_NO" , phone);
-    paramMap.put("CHECKSUMHASH" ,  checksum_hash); // "XtpRIsmhzV0KAKOAW2fj6tmk4HgIYNwgtqKKohP6nyW/llbnH7Kj5ZB9UOLiH7MTlDoC1ZW2aNtl/cyt8PUjrZPDJsjdiWeVXLsqxJM0Q4Q=");
-
-    PaytmOrder Order = new PaytmOrder(paramMap);
-
-    Service.initialize(Order, null);
-
-    Service.startPaymentTransaction(webView.getContext(), true, true,
-      new PaytmPaymentTransactionCallback() {
-
-        @Override
-        public void someUIErrorOccurred(java.lang.String inErrorMessage) {
-          // Some UI Error Occurred in Payment Gateway Activity.
-          // // This may be due to initialization of views in
-          // Payment Gateway Activity or may be due to //
-          // initialization of webview. // Error Message details
-          // the error occurred.
-          Log.i("Error","onTransactionFailure :"+inErrorMessage);
-          callbackContext.sendPluginResult(new PluginResult(PluginResult.Status.ERROR, inErrorMessage));
-
+            startPayment(options, callbackContext);
+            return true;
         }
+        return false;
+    }
 
-        @Override
-        public void onTransactionResponse(Bundle inResponse) {
-          Log.d("LOG", "Payment Transaction : " + inResponse);
-          callbackContext.sendPluginResult(new PluginResult(PluginResult.Status.OK, inResponse.toString()));
-//          Toast.makeText(getApplicationContext(), "Payment Transaction response "+inResponse.toString(), Toast.LENGTH_LONG).show();
+    private void startPayment(String options, final CallbackContext callbackContext) {
+        try {
+            JSONObject jsonobj = new JSONObject(options);
+
+            String env = jsonobj.getString("ENVIRONMENT");
+            if ("production".equalsIgnoreCase(env)) {
+                this.paytm_service = PaytmPGService.getProductionService();
+            } else {
+                this.paytm_service = PaytmPGService.getStagingService();
+            }
+            Map<String, String> paramMap = new HashMap<String, String>();
+            Iterator optkeys = jsonobj.keys();
+            while (optkeys.hasNext()) {
+                String key = (String) optkeys.next();
+                paramMap.put(key, jsonobj.getString(key));
+            }
+
+            paramMap.remove("ENVIRONMENT");
+            paramMap.put("CHANNEL_ID", "WAP");
+
+            PaytmOrder order = new PaytmOrder(paramMap);
+
+            this.paytm_service.initialize(order, null);
+            this.paytm_service.startPaymentTransaction(cordova.getActivity(), false, false,
+                    new PaytmPaymentTransactionCallback() {
+
+                        @Override
+                        public void onTransactionResponse(Bundle inResponse) {
+                            Log.i("Error", "onTransactionSuccess :" + inResponse);
+                            JSONObject json = new JSONObject();
+                            Set<String> keys = inResponse.keySet();
+                            for (String key : keys) {
+                                try {
+                                    json.put(key, wrap(inResponse.get(key)));
+                                } catch (JSONException e) {
+                                    Log.e("Error", "Error onTransactionSuccess response parsing", e);
+                                }
+                            }
+                            callbackContext.success(json);
+                        }
+
+                        @Override
+                        public void networkNotAvailable() {
+                            Log.i("Error", "networkNotAvailable");
+                            JSONObject error = new JSONObject();
+                            try {
+                                error.put("STATUS", "TXN_FAILURE");
+                                error.put("RESPCODE", 501);
+                                error.put("RESPMSG", "Network Not Available");
+                            } catch (JSONException e) {
+                                Log.e("Error", "Error networkNotAvailable json object creation", e);
+                            }
+                            callbackContext.error(error);
+                        }
+
+                        @Override
+                        public void clientAuthenticationFailed(String inErrorMessage) {
+                            Log.i("Error", "clientAuthenticationFailed :" + inErrorMessage);
+                            JSONObject error = new JSONObject();
+                            try {
+                                error.put("STATUS", "TXN_FAILURE");
+                                error.put("RESPCODE", 922);
+                                error.put("RESPMSG", inErrorMessage);
+                            } catch (JSONException e) {
+                                Log.e("Error", "Error clientAuthenticationFailed json object creation", e);
+                            }
+                            callbackContext.error(error);
+                        }
+
+                        @Override
+                        public void someUIErrorOccurred(String arg0) {
+                            Log.i("Error", "someUIErrorOccurred :" + arg0);
+                            JSONObject error = new JSONObject();
+                            try {
+                                error.put("STATUS", "TXN_FAILURE");
+                                error.put("RESPCODE", 501);
+                                error.put("RESPMSG", "System Error");
+                            } catch (JSONException e) {
+                                Log.e("Error", "Error someUIErrorOccurred json object creation", e);
+                            }
+                            callbackContext.error(error);
+                        }
+
+                        @Override
+                        public void onErrorLoadingWebPage(int iniErrorCode, String inErrorMessage,
+                                String inFailingUrl) {
+                            Log.i("Error", "onErrorLoadingWebPage arg0  :" + iniErrorCode);
+                            Log.i("Error", "onErrorLoadingWebPage arg1  :" + inErrorMessage);
+                            Log.i("Error", "onErrorLoadingWebPage arg2  :" + inFailingUrl);
+                            JSONObject error = new JSONObject();
+                            try {
+                                error.put("STATUS", "TXN_FAILURE");
+                                error.put("RESPCODE", iniErrorCode);
+                                error.put("RESPMSG", inErrorMessage);
+                                error.put("ERRURL", inFailingUrl);
+                            } catch (JSONException e) {
+                                Log.e("Error", "Error onErrorLoadingWebPage json object creation", e);
+                            }
+                            callbackContext.error(error);
+                        }
+
+                        @Override
+                        public void onBackPressedCancelTransaction() {
+                            Log.i("Error", "back button pressed");
+                            JSONObject error = new JSONObject();
+                            try {
+                                error.put("STATUS", "TXN_FAILURE");
+                                error.put("RESPCODE", 141);
+                                error.put("RESPMSG", "Request cancelled by Customer");
+                            } catch (JSONException e) {
+                                Log.e("Error", "Error onBackPressedCancelTransaction json object creation", e);
+                            }
+                            callbackContext.error(error);
+                        }
+
+                        @Override
+                        public void onTransactionCancel(String inErrorMessage, Bundle inResponse) {
+                            Log.i("Error", "onTransactionCancel :" + inErrorMessage);
+                            JSONObject error = new JSONObject();
+                            Set<String> keys = inResponse.keySet();
+                            for (String key : keys) {
+                                try {
+                                    error.put(key, wrap(inResponse.get(key)));
+                                } catch (JSONException e) {
+                                    Log.e("Error", "Error onTransactionCancel json object creation", e);
+                                }
+                            }
+                            callbackContext.error(error);
+                        }
+
+                    });
+        } catch (Exception e) {
+            Log.e("Error", "Error on Input param parsing", e);
+            JSONObject error = new JSONObject();
+            try {
+                error.put("STATUS", "TXN_FAILURE");
+                error.put("RESPCODE", 501);
+                error.put("RESPMSG", "Network Not Available");
+            } catch (JSONException exp) {
+                Log.e("Error", "Error networkNotAvailable json object creation", exp);
+            }
+            callbackContext.error(error);
         }
-
-        @Override
-        public void networkNotAvailable() {
-          // If network is not
-          // available, then this
-          // method gets called.
-          Log.i("Error","networkNotAvailable");
-          callbackContext.sendPluginResult(new PluginResult(PluginResult.Status.ERROR, "Network is not available, please check your network and try again"));
-        }
-
-        @Override
-        public void clientAuthenticationFailed(java.lang.String inErrorMessage) {
-          // This method gets called if client authentication
-          // failed. // Failure may be due to following reasons //
-          // 1. Server error or downtime. // 2. Server unable to
-          // generate checksum or checksum response is not in
-          // proper format. // 3. Server failed to authenticate
-          // that client. That is value of payt_STATUS is 2. //
-          // Error Message describes the reason for failure.
-          Log.i("Error","clientAuthenticationFailed :"+inErrorMessage);
-          callbackContext.sendPluginResult(new PluginResult(PluginResult.Status.ERROR, inErrorMessage));
-        }
-
-        @Override
-        public void onErrorLoadingWebPage(int iniErrorCode,
-                                          java.lang.String inErrorMessage, java.lang.String inFailingUrl) {
-
-          Log.i("Error","onErrorLoadingWebPage :"+inErrorMessage);
-          callbackContext.sendPluginResult(new PluginResult(PluginResult.Status.ERROR, inErrorMessage));
-
-        }
-
-        // had to be added: NOTE
-        @Override
-        public void onBackPressedCancelTransaction() {
-          // TODO Auto-generated method stub
-          Log.i("Error","BackPressedCancelTransaction");
-          callbackContext.sendPluginResult(new PluginResult(PluginResult.Status.ERROR, "Transaction cancelled by user"));
-        }
-
-        @Override
-        public void onTransactionCancel(java.lang.String inErrorMessage, Bundle inResponse) {
-          Log.d("LOG", "Payment Transaction Failed " + inErrorMessage);
-          callbackContext.sendPluginResult(new PluginResult(PluginResult.Status.ERROR, inErrorMessage));
-          //Toast.makeText(getBaseContext(), "Payment Transaction Failed ", Toast.LENGTH_LONG).show();
-        }
-
-      });
-
-
-
-  }
-
+    }
 
 }

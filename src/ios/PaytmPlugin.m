@@ -1,137 +1,78 @@
 #import "PaytmPlugin.h"
+#import <Cordova/CDV.h>
 
-#import <Cordova/CDVAvailability.h>
+#define NILABLE(obj) ((obj) != nil ? (NSObject *)(obj) : (NSObject *)[NSNull null])
 
-@implementation PaytmPlugin {
-    
+@implementation PaytmPlugin{
     NSString* callbackId;
     PGTransactionViewController* txnController;
 }
 
-- (void)payWithPaytm:(CDVInvokedUrlCommand *)command {
+
+- (void)startPayment:(CDVInvokedUrlCommand *)command {
     
     callbackId = command.callbackId;
+    NSDictionary *options = [NSJSONSerialization JSONObjectWithData:[[[command arguments] objectAtIndex:0]
+                             dataUsingEncoding:NSUTF8StringEncoding] options:0 error:nil];
     
-    // //orderid, cust_id, email, phone,txn_amt,callback_url,checksum_hash,environment
-    NSString *merchantId  = [command.arguments objectAtIndex:0];
-    NSString *industryTypeId  = [command.arguments objectAtIndex:1];
-    NSString *channelId  = [command.arguments objectAtIndex:2];
-    NSString *website  = [command.arguments objectAtIndex:3];
-    NSString *orderId  = [command.arguments objectAtIndex:4];
-    NSString *customerId = [command.arguments objectAtIndex:5];
-    NSString *email = [command.arguments objectAtIndex:6];
-    NSString *phone = [command.arguments objectAtIndex:7];
-    NSString *amount = [command.arguments objectAtIndex:8];
-    NSString *callbackURl = [command.arguments objectAtIndex:9];
-    NSString *checksumHash = [command.arguments objectAtIndex:10];
-    NSString *environment = [command.arguments objectAtIndex:11];
-
     NSBundle* mainBundle;
     mainBundle = [NSBundle mainBundle];
 
-    //Step 1: Create a default merchant config object
-    PGMerchantConfiguration *merchant = [PGMerchantConfiguration defaultConfiguration];
+    PGMerchantConfiguration* merchant = [PGMerchantConfiguration defaultConfiguration];
 
     //Step 2: Create the order with whatever params you want to add. But make sure that you include the merchant mandatory params
-    NSMutableDictionary *orderDict = [NSMutableDictionary new];
+    NSMutableDictionary *orderDict = [options mutableCopy];
+    NSString *environment=orderDict[@"ENVIRONMENT"];
+    [orderDict removeObjectForKey:@"ENVIRONMENT"];
     //Merchant configuration in the order object
-
-    orderDict[@"MID"] = merchantId;
-    orderDict[@"ORDER_ID"] = orderId;
-    orderDict[@"CUST_ID"] = customerId;
-    orderDict[@"INDUSTRY_TYPE_ID"] = industryTypeId;
-    orderDict[@"CHANNEL_ID"] = channelId;
-    orderDict[@"TXN_AMOUNT"] = amount;
-    orderDict[@"WEBSITE"] = website;
-    orderDict[@"CALLBACK_URL"] = callbackURl;
-    orderDict[@"CHECKSUMHASH"] = checksumHash;
-    orderDict[@"EMAIL"] = email;
-    orderDict[@"MOBILE_NO"] = phone;
+    orderDict[@"CHANNEL_ID"] = @"WAP";
 
     PGOrder *order = [PGOrder orderWithParams:orderDict];
-
-    //Step 3: Choose the PG server. In your production build dont call selectServerDialog. Just create a instance of the
+    
+    //Choose the PG server. In your production build dont call selectServerDialog. Just create a instance of the
     //PGTransactionViewController and set the serverType to eServerTypeProduction
-
-    txnController = [[PGTransactionViewController alloc] initTransactionForOrder:order];
-    if ([environment isEqualToString:@"staging"]) {
-        txnController.serverType = eServerTypeStaging;
-    } else {
-        txnController.serverType = eServerTypeProduction;
-    }
-
-    txnController.merchant = merchant;
-    txnController.delegate = self;
-    txnController.loggingEnabled = YES;
-    [self showController:txnController];
-}
-
--(void)showController:(PGTransactionViewController *)controller
-{
-    UIViewController *rootVC = [[[[UIApplication sharedApplication] delegate] window] rootViewController];
-    //    [rootVC.navigationController pushViewController:txnController animated:true];
-    [rootVC presentViewController:controller animated:YES completion:nil];
-}
-
-#pragma mark PGTransactionViewController delegate
-
--(void)didFinishedResponse:(PGTransactionViewController *)controller response:(NSString *)responseString {
-    DEBUGLOG(@"ViewController::didFinishedResponse:response = %@", responseString);
-    
-    NSData *data = [responseString dataUsingEncoding:NSUTF8StringEncoding];
-    id json = [NSJSONSerialization JSONObjectWithData:data options:0 error:nil];
-    if (json != nil) {
-        if ([json[@"RESPCODE"] integerValue] == 1 || [json[@"RESPCODE"] isEqualToString:@"TXN_SUCCESS"]) {
-            CDVPluginResult* result = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:responseString];
-            [self.commandDelegate sendPluginResult:result callbackId:callbackId];
+        PGTransactionViewController *txnController = [[PGTransactionViewController alloc] initTransactionForOrder:order];
+        if ([environment  caseInsensitiveCompare: @"production"] == NSOrderedSame) {
+            txnController.serverType = eServerTypeProduction;
         } else {
-            CDVPluginResult* result = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:responseString];
-            [self.commandDelegate sendPluginResult:result callbackId:callbackId];
+            txnController.serverType = eServerTypeStaging;
+            txnController.useStaging = true;
         }
-    }
-    
-    [txnController dismissViewControllerAnimated:YES completion:nil];
+        txnController.merchant = merchant;
+        txnController.delegate = self;
+        txnController.loggingEnabled = YES;
+        UIViewController *rootVC = [[[[UIApplication sharedApplication] delegate] window] rootViewController];
+        [rootVC presentViewController:txnController animated:YES completion:nil];
 }
 
-- (void)didCancelTransaction:(PGTransactionViewController *)controller error:(NSError*)error response:(NSDictionary *)response
-{
-    DEBUGLOG(@"ViewController::didCancelTransaction error = %@ response= %@", error, response);
-    NSError * err;
-    NSData * jsonData = [NSJSONSerialization  dataWithJSONObject:response options:0 error:&err];
-    if (err != nil && jsonData != nil) {
-        NSString * responseString = [[NSString alloc] initWithData:jsonData   encoding:NSUTF8StringEncoding];
-        CDVPluginResult* result = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:responseString];
+//Called when a transaction has completed. response dictionary will be having details about Transaction.
+- (void)didFinishedResponse:(PGTransactionViewController *)controller response:(NSString *)responseString {
+    DEBUGLOG(@"ViewController::didFinishedResponse:response = %@", responseString);
+    NSDictionary *response = [NSJSONSerialization JSONObjectWithData:[responseString dataUsingEncoding:NSUTF8StringEncoding] options:0 error:nil];
+    if ([response[@"STATUS"]  isEqual: @"TXN_SUCCESS"]) {
+        CDVPluginResult* result = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsDictionary:response];
         [self.commandDelegate sendPluginResult:result callbackId:callbackId];
     } else {
         CDVPluginResult* result = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsDictionary:response];
         [self.commandDelegate sendPluginResult:result callbackId:callbackId];
     }
-    [txnController dismissViewControllerAnimated:YES completion:nil];
-    
+    [controller dismissViewControllerAnimated:YES completion:nil];
 }
 
-- (void)didFinishCASTransaction:(PGTransactionViewController *)controller response:(NSDictionary *)response
-{
-    DEBUGLOG(@"ViewController::didFinishCASTransaction:response = %@", response);
-}
-
-//Called when a user has been cancelled the transaction.
-
--(void)didCancelTrasaction:(PGTransactionViewController *)controller;{
-    CDVPluginResult* result = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:@"User has been cancelled the transaction."];
+//Called when a transaction is Canceled by User. response dictionary will be having details about Canceled Transaction.
+- (void)didCancelTransaction:(PGTransactionViewController *)controller {
+    DEBUGLOG(@"ViewController::didCancelTransaction ");
+    CDVPluginResult* result = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString: @"Cancelled Transaction"];
     [self.commandDelegate sendPluginResult:result callbackId:callbackId];
-    [txnController dismissViewControllerAnimated:YES completion:nil];
-    
+    [controller dismissViewControllerAnimated:YES completion:nil];
 }
 
-//Called when a required parameter is missing.
-
--(void)errorMisssingParameter:(PGTransactionViewController *)controller error:(NSError *) error; {
-    
-    CDVPluginResult* result = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:error.description];
-    [self.commandDelegate sendPluginResult:result callbackId:callbackId];
-    [txnController dismissViewControllerAnimated:YES completion:nil];
-}
-
+ - (void)errorMisssingParameter:(PGTransactionViewController *)controller  error:(NSError *) error {
+      DEBUGLOG(@"ViewController::errorMisssingParameter:error = %@", error);
+     CDVPluginResult* result = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsDictionary:@{ @"RESPCODE": NILABLE([NSNumber numberWithInteger:error.code]),
+                                                                                                                @"RESPMSG": NILABLE(error.localizedDescription)}];
+     [self.commandDelegate sendPluginResult:result callbackId:callbackId];
+     [controller dismissViewControllerAnimated:YES completion:nil];
+ }
 
 @end

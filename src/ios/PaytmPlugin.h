@@ -1,11 +1,8 @@
-#import <Cordova/CDVPlugin.h>
 #import "PaymentsSDK.h"
+#import <Cordova/CDV.h>
 
-@interface PaytmPlugin : CDVPlugin<PGTransactionDelegate> {
-}
+@interface PaytmPlugin : CDVPlugin <PGTransactionDelegate>
 
-// The hooks for our plugin commands
-- (void)payWithPaytm:(CDVInvokedUrlCommand *)command;
-
+- (void)startPayment:(CDVInvokedUrlCommand*)command;
 
 @end

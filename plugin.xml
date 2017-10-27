@@ -11,30 +11,37 @@
 
     <!-- android -->
     <platform name="android">
-      <js-module src="www/plugin.js" name="plugin">
-        <runs/>
-        <!-- This is the window variable name you want, like window.MyCordovaPlugin -->
-        <clobbers target="PaytmPlugin" />
-      </js-module>
-      <config-file target="res/xml/config.xml" parent="/*">
-        <feature name="PaytmPlugin">
-          <param name="android-package" value="com.plugin.PaytmPlugin" />
-          <param name="onload" value="true" />
-        </feature>
-      </config-file>
-
-    <source-file src="src/android/res/values/paytmInfo.xml" target-dir="res/values" />
-     <config-file target="AndroidManifest.xml" parent="/*">
-        <uses-permission android:name="android.permission.INTERNET"/>
-        <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
-    </config-file>
-
-    <config-file target="AndroidManifest.xml" parent="application">
-        <activity android:name="com.paytm.pgsdk.PaytmPGActivity" android:screenOrientation="portrait" android:configChanges="keyboardHidden|orientation|keyboard"/>
-    </config-file>
-
-     <source-file src="src/android/PaytmSDK/PGSDK_V2.1.jar" target-dir="libs" />
-      <source-file src="src/android/com/plugin/PaytmPlugin.java" target-dir="src/com/plugin/" />
+        <js-module src="www/plugin.js" name="plugin">
+            <runs/>
+            <!-- This is the window variable name you want, like window.MyCordovaPlugin -->
+            <clobbers target="PaytmPlugin" />
+        </js-module>
+        <config-file
+            target="res/xml/config.xml"
+            parent="/*">
+            <feature name="PayTmPlugin">
+                <param name="android-package"
+                    value="com.plugin.PaytmPlugin" />
+                <param name="onload"
+                    value="true" />
+            </feature>
+        </config-file>
+        <source-file src="src/android/res/values/paytmInfo.xml" target-dir="res/values" />
+        <config-file target="AndroidManifest.xml" parent="/*">
+            <uses-permission android:name="android.permission.INTERNET"/>
+            <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
+        </config-file>
+        <config-file target="AndroidManifest.xml" parent="application">
+            <activity android:name="com.paytm.pgsdk.PaytmPGActivity"
+                android:screenOrientation="portrait"
+                android:configChanges="keyboardHidden|orientation|keyboard"/>
+        </config-file>
+        <source-file
+            src="src/android/PaytmSDK/PGSDK_V2.1.jar"
+            target-dir="libs" />
+        <source-file
+            src="src/android/com/plugin/PaytmPlugin.java"
+            target-dir="src/com/plugin/" />
     </platform>
 
     <!-- ios -->
@@ -45,7 +52,7 @@
         </js-module>
         <config-file target="config.xml" parent="/*">
             <feature name="PaytmPlugin">
-                <param name="ios-package" value="PaytmPlugin" onload="true" />
+                <param name="ios-package" value="PaytmPlugin" onload="true"/>
                 <plugin name="PaytmPlugin" value="PaytmPlugin"/>
             </feature>
         </config-file>
