@@ -96,7 +96,10 @@ public class PaytmPlugin extends CordovaPlugin {
             PaytmOrder order = new PaytmOrder(paramMap);
 
             this.paytm_service.initialize(order, null);
-            this.paytm_service.startPaymentTransaction(cordova.getActivity(), false, false,
+            this.paytm_service.startPaymentTransaction(
+                    cordova.getActivity(),
+                    true,
+                    false,
                     new PaytmPaymentTransactionCallback() {
 
                         @Override
